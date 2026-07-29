@@ -634,8 +634,14 @@ export default function App() {
 
       const data = await response.json();
       
+      const getRedirectUrl = (dest: 'thank-you') => {
+        const p = window.location.pathname;
+        if (p.includes('api/backend/admin')) return '../../frontend/thank-you.php';
+        return 'thank-you.php';
+      };
+      
       if (data.success) {
-        window.location.href = '../thank-you.php';
+        window.location.href = getRedirectUrl('thank-you');
       } else {
         if (data.errors && data.errors.length > 0) {
           toast.error(data.errors.join('\\n'));
@@ -673,8 +679,14 @@ export default function App() {
       
       const data = await response.json();
       
+      const getRedirectUrl = (dest: 'dashboard') => {
+        const p = window.location.pathname;
+        if (p.includes('api/backend/admin')) return 'dashboard.php';
+        return '../backend/admin/dashboard.php';
+      };
+
       if (data.success) {
-        window.location.href = '../api/backend/admin/dashboard.php';
+        window.location.href = getRedirectUrl('dashboard');
       } else {
         setAdminLoginError(data.message || 'Invalid username or password');
       }
@@ -828,7 +840,8 @@ export default function App() {
         onClose={() => {
           if (isDashboardPage) {
             const hid = (window as any).ADMIN_HOSPITAL_ID;
-            window.location.href = hid ? `../../../frontend/index.html?hospital_id=${hid}` : '../../../frontend/index.html';
+            const destUrl = hid ? `../../frontend/patient-login.php?hospital_id=${hid}` : '../../frontend/patient-login.php';
+            window.location.href = destUrl;
           } else {
             setShowAdminDashboard(false);
           }
