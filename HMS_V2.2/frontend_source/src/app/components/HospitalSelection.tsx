@@ -43,7 +43,14 @@ export function HospitalSelection({
       setLoadingHospitals(true);
       setError(null);
       
-      const response = await fetch('../api/backend/ajax/get-hospitals.php', {
+      const getApiUrl = (endpoint: string) => {
+        const p = window.location.pathname;
+        if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
+        if (p.includes('api/frontend')) return `../backend/ajax/${endpoint}`;
+        return `../api/backend/ajax/${endpoint}`;
+      };
+
+      const response = await fetch(getApiUrl('get-hospitals.php'), {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -98,7 +105,14 @@ export function HospitalSelection({
     setLoginError('');
     
     try {
-      const response = await fetch('../api/backend/ajax/login-ajax.php', {
+      const getApiUrl = (endpoint: string) => {
+        const p = window.location.pathname;
+        if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
+        if (p.includes('api/frontend')) return `../backend/ajax/${endpoint}`;
+        return `../api/backend/ajax/${endpoint}`;
+      };
+
+      const response = await fetch(getApiUrl('login-ajax.php'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: loginUsername, password: loginPassword })

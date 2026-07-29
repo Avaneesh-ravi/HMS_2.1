@@ -280,12 +280,14 @@ export default function App() {
       return;
     }
 
-    const isBackend = window.location.pathname.includes('backend/admin');
-    const apiUrl = isBackend 
-      ? `../ajax/get-questions.php?hospital_id=${hospitalId}` 
-      : `../api/backend/ajax/get-questions.php?hospital_id=${hospitalId}`;
+    const getApiUrl = (endpoint: string) => {
+      const p = window.location.pathname;
+      if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
+      if (p.includes('api/frontend')) return `../backend/ajax/${endpoint}`;
+      return `../api/backend/ajax/${endpoint}`;
+    };
 
-    fetch(apiUrl)
+    fetch(getApiUrl(`get-questions.php?hospital_id=${hospitalId}`))
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -411,8 +413,15 @@ export default function App() {
     if (!patientInfo.uhid) return;
     const urlParams = new URLSearchParams(window.location.search);
     const hospitalId = urlParams.get('hospital_id') || '1';
+    const getApiUrl = (endpoint: string) => {
+      const p = window.location.pathname;
+      if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
+      if (p.includes('api/frontend')) return `../backend/ajax/${endpoint}`;
+      return `../api/backend/ajax/${endpoint}`;
+    };
+
     try {
-      const res = await fetch(`../backend/ajax/get-patient.php?uhid=${encodeURIComponent(patientInfo.uhid)}&hospital_id=${hospitalId}`);
+      const res = await fetch(getApiUrl(`get-patient.php?uhid=${encodeURIComponent(patientInfo.uhid)}&hospital_id=${hospitalId}`));
       const data = await res.json();
       if (data.success && data.data) {
         setPatientInfo(prev => ({
@@ -610,8 +619,15 @@ export default function App() {
       formData.append('suggestions', suggestions);
       formData.append('signature_confirmed', '1');
 
+      const getApiUrl = (endpoint: string) => {
+        const p = window.location.pathname;
+        if (p.includes('api/backend/admin')) return `../process/${endpoint}`; // relative to admin folder
+        if (p.includes('api/frontend')) return `../backend/process/${endpoint}`;
+        return `../api/backend/process/${endpoint}`;
+      };
+
       // Submit via fetch to get JSON response
-      const response = await fetch('../api/backend/process/submit-feedback.php', {
+      const response = await fetch(getApiUrl('submit-feedback.php'), {
         method: 'POST',
         body: formData
       });
@@ -636,7 +652,14 @@ export default function App() {
   const handleAdminLogin = async () => {
     setAdminLoginError('');
     try {
-      const response = await fetch('../api/backend/ajax/login-ajax.php', {
+      const getApiUrl = (endpoint: string) => {
+        const p = window.location.pathname;
+        if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
+        if (p.includes('api/frontend')) return `../backend/ajax/${endpoint}`;
+        return `../api/backend/ajax/${endpoint}`;
+      };
+
+      const response = await fetch(getApiUrl('login-ajax.php'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

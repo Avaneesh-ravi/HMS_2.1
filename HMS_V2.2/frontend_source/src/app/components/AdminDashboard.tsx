@@ -500,10 +500,14 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
   const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
-    const isBackend = window.location.pathname.includes('backend/admin');
-    const apiUrl = isBackend ? '../ajax/get-responses.php' : '../backend/ajax/get-responses.php';
+    const getApiUrl = (endpoint: string) => {
+      const p = window.location.pathname;
+      if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
+      if (p.includes('api/frontend')) return `../backend/ajax/${endpoint}`;
+      return `../api/backend/ajax/${endpoint}`;
+    };
     
-    fetch(apiUrl, { credentials: 'same-origin' })
+    fetch(getApiUrl('get-responses.php'), { credentials: 'same-origin' })
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.text();
@@ -548,9 +552,9 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
         setApiError(e.message);
       });
 
-    // Fetch questions
-    const qApiUrl = isBackend ? '../ajax/get-questions.php' : '../backend/ajax/get-questions.php';
-    fetch(qApiUrl, { credentials: 'same-origin' })
+
+
+    fetch(getApiUrl('get-questions.php'), { credentials: 'same-origin' })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -598,8 +602,14 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
   const handleSaveBranding = async () => {
     setIsSavingBranding(true);
     try {
-      const isBackend = window.location.pathname.includes('backend/admin');
-      const apiUrl = isBackend ? '../ajax/save-branding.php' : '../backend/ajax/save-branding.php';
+      const getApiUrl = (endpoint: string) => {
+        const p = window.location.pathname;
+        if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
+        if (p.includes('api/frontend')) return `../backend/ajax/${endpoint}`;
+        return `../api/backend/ajax/${endpoint}`;
+      };
+
+      const apiUrl = getApiUrl('save-branding.php');
       
       const formData = new FormData();
       formData.append('hospitalName', brandingSettings.hospitalName);
@@ -683,8 +693,14 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
   const handleSaveQuestions = async () => {
     setIsSavingQuestions(true);
     try {
-      const isBackend = window.location.pathname.includes('backend/admin');
-      const apiUrl = isBackend ? '../ajax/save-questions.php' : '../backend/ajax/save-questions.php';
+      const getApiUrl = (endpoint: string) => {
+        const p = window.location.pathname;
+        if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
+        if (p.includes('api/frontend')) return `../backend/ajax/${endpoint}`;
+        return `../api/backend/ajax/${endpoint}`;
+      };
+
+      const apiUrl = getApiUrl('save-questions.php');
       
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -708,8 +724,7 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
       if (data.success) {
         toast.success('Form configuration saved successfully to DB!');
         // Ideally we fetch again to get the real DB IDs for new questions
-        const qApiUrl = isBackend ? '../ajax/get-questions.php' : '../backend/ajax/get-questions.php';
-        const refreshRes = await fetch(qApiUrl, { credentials: 'same-origin' });
+        const refreshRes = await fetch(getApiUrl('get-questions.php'), { credentials: 'same-origin' });
         const refreshData = await refreshRes.json();
         if (refreshData.success) {
           if (refreshData.data && refreshData.data.length > 0) setQuestions(refreshData.data);
