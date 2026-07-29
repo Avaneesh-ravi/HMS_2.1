@@ -73,7 +73,7 @@ function insertPatient(PDO $pdo, array $d): int {
             VALUES
             (gen_random_uuid(), :uhid, :first_name, :age, :gender, :mobile, :email, :address,
              :pincode, :city, :state, :country, :op_no, :ip_no, :admission_date, :discharge_date, :hospital_id, :feedback_form_id)
-            ON CONFLICT (uhid) 
+            ON CONFLICT ON CONSTRAINT uq_patient_uhid 
             DO UPDATE SET 
                 first_name = EXCLUDED.first_name,
                 age = EXCLUDED.age,

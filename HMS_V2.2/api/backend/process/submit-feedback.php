@@ -195,6 +195,8 @@ try {
     insertFeedbackSubmission($pdo, $patientId, $feedbackData);
 
     $pdo->commit();
+    echo json_encode(['success' => true]);
+    exit;
 } catch (Exception $e) {
 
     $pdo->rollBack();
