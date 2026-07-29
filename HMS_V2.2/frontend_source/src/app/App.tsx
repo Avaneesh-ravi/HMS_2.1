@@ -445,74 +445,95 @@ export default function App() {
     }
   };
 
-  const handleNext = () => {
-    // Step 0: Patient Information Validation
-    if (currentStep === 0) {
-      const newErrors: Record<string, string> = {};
+  const validatePatientInfo = (info: PatientInfo, strict: boolean = false) => {
+    const newErrors: Record<string, string> = {};
 
-      if (!patientInfo.uhid) newErrors.uhid = language === 'en' ? 'UHID is required' : 'UHID தேவை';
-      
-      if (!patientInfo.firstName) {
+    if (strict && !info.uhid) newErrors.uhid = language === 'en' ? 'UHID is required' : 'UHID தேவை';
+    
+    if (info.firstName !== '' || strict) {
+      if (!info.firstName) {
         newErrors.firstName = language === 'en' ? 'First name is required' : 'முதல் பெயர் தேவை';
-      } else if (!/^[a-zA-Z\s.'-]+$/.test(patientInfo.firstName)) {
+      } else if (!/^[a-zA-Z\s.'-]+$/.test(info.firstName)) {
         newErrors.firstName = language === 'en' ? 'Name should only contain letters' : 'பெயரில் எழுத்துக்கள் மட்டுமே இருக்க வேண்டும்';
-      } else if (patientInfo.firstName.length < 2) {
+      } else if (info.firstName.length < 2) {
         newErrors.firstName = language === 'en' ? 'Name must be at least 2 characters' : 'குறைந்தது 2 எழுத்துக்கள் இருக்க வேண்டும்';
-      } else if (patientInfo.firstName.length > 100) {
+      } else if (info.firstName.length > 100) {
         newErrors.firstName = language === 'en' ? 'Name must not exceed 100 characters' : '100 எழுத்துக்களைத் தாண்டக்கூடாது';
       }
+    }
 
-      if (!patientInfo.mobile) {
+    if (info.mobile !== '' || strict) {
+      if (!info.mobile) {
         newErrors.mobile = language === 'en' ? 'Mobile number is required' : 'மொபைல் எண் தேவை';
       } else {
-        const digitsOnly = patientInfo.mobile.replace(/\D/g, '');
+        const digitsOnly = info.mobile.replace(/\D/g, '');
         const cleanMobile = digitsOnly.startsWith('91') && digitsOnly.length > 10 ? digitsOnly.slice(2) : digitsOnly;
         if (cleanMobile.length !== 10) {
           newErrors.mobile = language === 'en' ? 'Mobile number must be exactly 10 digits' : 'சரியாக 10 இலக்கங்கள் இருக்க வேண்டும்';
         }
       }
+    }
 
-      if (patientInfo.email) {
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(patientInfo.email)) {
+    if (info.email !== '' || strict) {
+      if (info.email) {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(info.email)) {
           newErrors.email = language === 'en' ? 'Please enter a valid email address' : 'சரியான மின்னஞ்சலை உள்ளிடவும்';
-        } else if (patientInfo.email.length > 100) {
+        } else if (info.email.length > 100) {
           newErrors.email = language === 'en' ? 'Email must not exceed 100 characters' : '100 எழுத்துக்களைத் தாண்டக்கூடாது';
         }
       }
-      
-      if (!patientInfo.address) {
+    }
+    
+    if (info.address !== '' || strict) {
+      if (!info.address) {
         newErrors.address = language === 'en' ? 'Address is required' : 'முகவரி தேவை';
-      } else if (patientInfo.address.length < 5) {
+      } else if (info.address.length < 5) {
         newErrors.address = language === 'en' ? 'Address must be at least 5 characters' : 'குறைந்தது 5 எழுத்துக்கள் இருக்க வேண்டும்';
-      } else if (patientInfo.address.length > 200) {
+      } else if (info.address.length > 200) {
         newErrors.address = language === 'en' ? 'Address must not exceed 200 characters' : '200 எழுத்துக்களைத் தாண்டக்கூடாது';
       }
+    }
 
-      if (!patientInfo.age || parseInt(patientInfo.age) <= 0 || parseInt(patientInfo.age) > 130) {
+    if (info.age !== '' || strict) {
+      if (!info.age || parseInt(info.age) <= 0 || parseInt(info.age) > 130) {
         newErrors.age = language === 'en' ? 'Valid Age is required' : 'சரியான வயது தேவை';
       }
+    }
 
-      // Date Validations
-      const today = new Date();
-      today.setHours(23, 59, 59, 999);
-
-      const validateDateNotFuture = (date: Date | null, fieldNameEn: string, fieldNameTa: string, key: string) => {
-        if (date && date > today) {
-          newErrors[key] = language === 'en' ? `${fieldNameEn} cannot be in the future` : `${fieldNameTa} எதிர்காலத்தில் இருக்கக்கூடாது`;
-        }
-      };
-
-      if (patientInfo.visitType === 'OP') {
-        validateDateNotFuture(patientInfo.opDate, 'OP Date', 'OP தேதி', 'opDate');
-      } else if (patientInfo.visitType === 'IP') {
-        validateDateNotFuture(patientInfo.ipDate, 'IP Date', 'IP தேதி', 'ipDate');
-        validateDateNotFuture(patientInfo.admissionDate, 'Date of Admission', 'சேர்க்கை தேதி', 'admissionDate');
-        validateDateNotFuture(patientInfo.dischargeDate, 'Date of Discharge', 'வெளியேறிய தேதி', 'dischargeDate');
-        
-        if (patientInfo.admissionDate && patientInfo.dischargeDate && patientInfo.dischargeDate < patientInfo.admissionDate) {
-           newErrors.dischargeDate = language === 'en' ? 'Date of Discharge cannot be earlier than Date of Admission' : 'வெளியேற்ற தேதி சேர்க்கைக்கு முந்தையதாக இருக்க முடியாது';
-        }
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    const validateDateNotFuture = (date: Date | null, fieldNameEn: string, fieldNameTa: string, key: string) => {
+      if (date && date > today) {
+        newErrors[key] = language === 'en' ? `${fieldNameEn} cannot be in the future` : `${fieldNameTa} எதிர்காலத்தில் இருக்கக்கூடாது`;
       }
+    };
+
+    if (info.visitType === 'OP') {
+      validateDateNotFuture(info.opDate, 'OP Date', 'OP தேதி', 'opDate');
+    } else if (info.visitType === 'IP') {
+      validateDateNotFuture(info.ipDate, 'IP Date', 'IP தேதி', 'ipDate');
+      validateDateNotFuture(info.admissionDate, 'Date of Admission', 'சேர்க்கை தேதி', 'admissionDate');
+      validateDateNotFuture(info.dischargeDate, 'Date of Discharge', 'வெளியேறிய தேதி', 'dischargeDate');
+      
+      if (info.admissionDate && info.dischargeDate && info.dischargeDate < info.admissionDate) {
+         newErrors.dischargeDate = language === 'en' ? 'Date of Discharge cannot be earlier than Date of Admission' : 'வெளியேற்ற தேதி சேர்க்கைக்கு முந்தையதாக இருக்க முடியாது';
+      }
+    }
+
+    return newErrors;
+  };
+
+  useEffect(() => {
+    // Real-time validation for step 0
+    if (selectedHospital && (currentStep === 0 || combinePages)) {
+      setFormErrors(validatePatientInfo(patientInfo, false));
+    }
+  }, [patientInfo, selectedHospital, currentStep, combinePages]);
+
+  const handleNext = () => {
+    // Step 0: Patient Information Validation
+    if (currentStep === 0) {
+      const newErrors = validatePatientInfo(patientInfo, true);
 
       setFormErrors(newErrors);
       
@@ -555,6 +576,14 @@ export default function App() {
   };
 
   const handleSubmit = async () => {
+    const errors = validatePatientInfo(patientInfo, true);
+    if (Object.keys(errors).length > 0) {
+       setFormErrors(errors);
+       toast.error(language === 'en' ? 'Please fix the errors in Patient Information' : 'தயவுசெய்து நோயாளி தகவலில் உள்ள பிழைகளை சரிசெய்யவும்');
+       window.scrollTo({ top: 0, behavior: 'smooth' });
+       return;
+    }
+
     try {
       const formData = new FormData();
       
@@ -639,7 +668,7 @@ export default function App() {
         if (p.includes('api/backend/admin')) return '../../frontend/thank-you.php';
         return 'thank-you.php';
       };
-      
+
       if (data.success) {
         window.location.href = getRedirectUrl('thank-you');
       } else {
