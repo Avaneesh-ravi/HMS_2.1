@@ -502,18 +502,36 @@ export default function App() {
 
     const today = new Date();
     today.setHours(23, 59, 59, 999);
-    const validateDateNotFuture = (date: Date | null, fieldNameEn: string, fieldNameTa: string, key: string) => {
-      if (date && date > today) {
+    
+    // Calculate logical birth year based on Age
+    const parsedAge = parseInt(info.age);
+    const hasValidAge = !isNaN(parsedAge) && parsedAge > 0;
+    const earliestAllowedDate = new Date();
+    if (hasValidAge) {
+      // If they are N years old, the earliest they could have visited the hospital is N years ago (when they were born).
+      // We subtract (Age + 1) years to give a safe mathematical buffer for exact birth dates.
+      earliestAllowedDate.setFullYear(today.getFullYear() - parsedAge - 1);
+    } else {
+      // Default fallback
+      earliestAllowedDate.setFullYear(today.getFullYear() - 130);
+    }
+
+    const validateDateLogics = (date: Date | null, fieldNameEn: string, fieldNameTa: string, key: string) => {
+      if (!date) return; // Not enforcing required here, handled separately if needed
+      
+      if (date > today) {
         newErrors[key] = language === 'en' ? `${fieldNameEn} cannot be in the future` : `${fieldNameTa} எதிர்காலத்தில் இருக்கக்கூடாது`;
+      } else if (hasValidAge && date < earliestAllowedDate) {
+        newErrors[key] = language === 'en' ? `${fieldNameEn} year (${date.getFullYear()}) cannot be before your birth year (based on age)` : `உங்கள் வயதின் அடிப்படையில் வருகை சாத்தியமில்லை`;
       }
     };
 
     if (info.visitType === 'OP') {
-      validateDateNotFuture(info.opDate, 'OP Date', 'OP தேதி', 'opDate');
+      validateDateLogics(info.opDate, 'OP Date', 'OP தேதி', 'opDate');
     } else if (info.visitType === 'IP') {
-      validateDateNotFuture(info.ipDate, 'IP Date', 'IP தேதி', 'ipDate');
-      validateDateNotFuture(info.admissionDate, 'Date of Admission', 'சேர்க்கை தேதி', 'admissionDate');
-      validateDateNotFuture(info.dischargeDate, 'Date of Discharge', 'வெளியேறிய தேதி', 'dischargeDate');
+      validateDateLogics(info.ipDate, 'IP Date', 'IP தேதி', 'ipDate');
+      validateDateLogics(info.admissionDate, 'Date of Admission', 'சேர்க்கை தேதி', 'admissionDate');
+      validateDateLogics(info.dischargeDate, 'Date of Discharge', 'வெளியேறிய தேதி', 'dischargeDate');
       
       if (info.admissionDate && info.dischargeDate && info.dischargeDate < info.admissionDate) {
          newErrors.dischargeDate = language === 'en' ? 'Date of Discharge cannot be earlier than Date of Admission' : 'வெளியேற்ற தேதி சேர்க்கைக்கு முந்தையதாக இருக்க முடியாது';
