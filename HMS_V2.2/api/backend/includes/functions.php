@@ -72,7 +72,25 @@ function insertPatient(PDO $pdo, array $d): int {
              pin_code, city, state, country, op_no, ip_no, admission_date, discharge_date, hospital_id, feedback_form_id)
             VALUES
             (gen_random_uuid(), :uhid, :first_name, :age, :gender, :mobile, :email, :address,
-             :pincode, :city, :state, :country, :op_no, :ip_no, :admission_date, :discharge_date, :hospital_id, :feedback_form_id)";
+             :pincode, :city, :state, :country, :op_no, :ip_no, :admission_date, :discharge_date, :hospital_id, :feedback_form_id)
+            ON CONFLICT (uhid) 
+            DO UPDATE SET 
+                first_name = EXCLUDED.first_name,
+                age = EXCLUDED.age,
+                gender = EXCLUDED.gender,
+                mobile = EXCLUDED.mobile,
+                p_email = EXCLUDED.p_email,
+                address = EXCLUDED.address,
+                pin_code = EXCLUDED.pin_code,
+                city = EXCLUDED.city,
+                state = EXCLUDED.state,
+                country = EXCLUDED.country,
+                op_no = EXCLUDED.op_no,
+                ip_no = EXCLUDED.ip_no,
+                admission_date = EXCLUDED.admission_date,
+                discharge_date = EXCLUDED.discharge_date,
+                hospital_id = EXCLUDED.hospital_id
+            RETURNING patient_id";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         ':uhid'            => $d['uhid'] ?: null,
@@ -93,7 +111,7 @@ function insertPatient(PDO $pdo, array $d): int {
         ':hospital_id'     => $d['hospital_id'] ?? 1,
         ':feedback_form_id'=> $d['feedback_form_id'] ?? 1
     ]);
-    return (int) $pdo->lastInsertId();
+    return (int) $stmt->fetchColumn();
 }
 
 /** Insert a feedback submission, ratings, yesno, etc */
